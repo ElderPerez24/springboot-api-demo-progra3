@@ -1,24 +1,27 @@
 # Workshop Spring Boot 3.x + JDK 17 (Maven)
 
-Este repositorio es un **tutorial paso a paso** para clase/laboratorio.
-Los estudiantes avanzan descomentando bloques, probando endpoints y completando ejercicios.
+Este proyecto fue evolucionando por incrementos, agregando endpoints, validaciones, manejo global de errores, documentación con Swagger/OpenAPI y, en esta etapa, persistencia con **Spring Data JPA** y **PostgreSQL**.
 
 ## Objetivo del taller
 
-- Practicar arquitectura basica de API REST con Spring Boot.
+- Practicar arquitectura básica de API REST con Spring Boot.
 - Aplicar validaciones con `jakarta.validation`.
 - Manejar errores de forma global.
 - Documentar la API con Swagger/OpenAPI.
-- Implementar un endpoint de negocio mas desafiante.
+- Implementar endpoints de negocio.
+- Integrar persistencia con `Spring Data JPA`.
+- Conectar y trabajar con `PostgreSQL`.
+- Modelar entidades relacionadas y exponer CRUD completo.
 
 ---
 
-## 0) Requisitos
+## Requisitos
 
 - Java `17`
 - Maven `3.9+`
+- PostgreSQL instalado
 
-Verifica Java:
+### Verificar Java
 
 ```bash
 java -version
@@ -26,212 +29,401 @@ java -version
 
 Debe mostrar `17.x`.
 
-Si usas macOS y necesitas cambiar Java temporalmente:
+### Verificar Maven
 
 ```bash
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home
-export PATH=$JAVA_HOME/bin:$PATH
+mvn -version
 ```
 
----
+Debe mostrar `3.9+`.
 
-## 1) Comando para generar el proyecto Spring Boot
+## Proyecto base del taller
 
-Este comando usa Spring Initializr y genera un proyecto Maven con Java 17 y Spring Boot 3.x:
+Este proyecto parte del workshop inicial de Spring Boot, donde se trabajó con:
+
+- Endpoint base `/api/v1`
+- Endpoint de saludos
+- Validaciones con `jakarta.validation`
+- Manejo global de errores
+- Swagger/OpenAPI
+- Endpoint de simulación de préstamo
+
+Posteriormente se agregó un incremento progresivo para trabajar con persistencia usando JPA y PostgreSQL.
+
+## Tecnologías utilizadas
+
+- Java 17
+- Spring Boot 3.3.5
+- Spring Web
+- Spring Validation
+- Spring Data JPA
+- Hibernate
+- PostgreSQL
+- Maven
+- Swagger / OpenAPI
+- JUnit 5
+- MockMvc
+
+## Configuración de base de datos
+
+Para esta etapa se utilizó una base de datos PostgreSQL llamada:
+
+```text
+workshop_jpa
+```
+
+### Configuración usada en `application.properties`
+
+```properties
+spring.application.name=springboot-api-demo
+server.port=8081
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/workshop_jpa
+spring.datasource.username=postgres
+spring.datasource.password=TU_CONTRASENA
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+```
+
+### Explicación de `ddl-auto`
+
+Se utilizó:
+
+```properties
+spring.jpa.hibernate.ddl-auto=update
+```
+
+porque permite que Hibernate cree o actualice automáticamente las tablas a partir de las entidades JPA, lo que facilita el desarrollo local.
+
+En un entorno de producción, lo recomendable sería usar `validate` junto con herramientas de migración como Flyway o Liquibase.
+
+## Estructura general del proyecto
+
+```text
+src/main/java
+└── com.ejemplo.demo
+    ├── api
+    │   ├── controller
+    │   │   ├── CategoriaController.java
+    │   │   ├── ProductoController.java
+    │   │   ├── SaludoController.java
+    │   │   └── SimulacionController.java
+    │   ├── dto
+    │   │   ├── CategoriaRequest.java
+    │   │   ├── CategoriaResponse.java
+    │   │   ├── ProductoRequest.java
+    │   │   ├── ProductoResponse.java
+    │   │   └── ErrorResponse.java
+    │   └── exception
+    │       └── GlobalExceptionHandler.java
+    ├── domain
+    │   ├── exception
+    │   │   └── ResourceNotFoundException.java
+    │   ├── model
+    │   │   ├── Categoria.java
+    │   │   └── Producto.java
+    │   ├── repository
+    │   │   ├── CategoriaRepository.java
+    │   │   └── ProductoRepository.java
+    │   └── service
+    │       ├── CategoriaService.java
+    │       └── ProductoService.java
+    └── SpringbootApiDemoApplication.java
+
+src/test/java
+└── com.ejemplo.demo.api.controller
+    └── CategoriaControllerTest.java
+```
+
+## Funcionalidades del proyecto base
+
+### Endpoint base
 
 ```bash
-curl https://start.spring.io/starter.zip \
-  -d type=maven-project \
-  -d language=java \
-  -d bootVersion=3.3.5 \
-  -d groupId=com.ejemplo \
-  -d artifactId=springboot-api-demo \
-  -d name=springboot-api-demo \
-  -d packageName=com.ejemplo.demo \
-  -d javaVersion=17 \
-  -d dependencies=web,validation \
-  -o springboot-api-demo.zip
+curl http://localhost:8081/api/v1
 ```
 
-```bash
-unzip springboot-api-demo.zip -d .
-cd springboot-api-demo
+### Saludos
+
+- `GET /api/v1/saludos`
+- `POST /api/v1/saludos`
+
+### Simulación de préstamo
+
+- `POST /api/v1/simulaciones/prestamo`
+
+Estas funcionalidades forman parte del trabajo anterior del workshop y se mantienen dentro del proyecto.
+
+## Incremento progresivo: Persistencia con JPA
+
+Como parte del avance actual, se integró persistencia usando Spring Data JPA y PostgreSQL.
+
+### Dependencias agregadas en `pom.xml`
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-jpa</artifactId>
+</dependency>
+
+<dependency>
+    <groupId>org.postgresql</groupId>
+    <artifactId>postgresql</artifactId>
+    <scope>runtime</scope>
+</dependency>
 ```
 
----
+## Entidades implementadas
 
-## 2) Paso a paso del taller
+### Categoria
 
-### Paso 1 - Ejecutar base del proyecto
+Campos:
 
-```bash
-mvn spring-boot:run
+- `id`
+- `nombre`
+- `descripcion`
+- `creadoEn`
+- `actualizadoEn`
+
+### Producto
+
+Campos:
+
+- `id`
+- `nombre`
+- `sku`
+- `precio`
+- `stock`
+- `categoria`
+- `creadoEn`
+- `actualizadoEn`
+
+### Relación
+
+- Una categoría tiene muchos productos.
+- Un producto pertenece a una categoría.
+
+Esto se implementó con:
+
+```java
+@OneToMany(mappedBy = "categoria")
+@ManyToOne
+@JoinColumn(name = "categoria_id")
 ```
 
-Probar endpoint base:
+## Repositorios implementados
 
-```bash
-curl http://localhost:8080/api/v1
+Se crearon repositorios con `JpaRepository` para acceso a datos:
+
+- `CategoriaRepository`
+- `ProductoRepository`
+
+Además, se agregaron métodos derivados del nombre para validaciones simples, por ejemplo:
+
+- Verificar si ya existe una categoría con el mismo nombre.
+- Verificar si ya existe un producto con el mismo SKU.
+
+## Servicios implementados
+
+Se implementaron servicios de dominio para separar la lógica de negocio de los controladores:
+
+- `CategoriaService`
+- `ProductoService`
+
+### Funciones principales
+
+- listar
+- obtener por id
+- crear
+- actualizar
+- eliminar
+
+### Validaciones aplicadas
+
+- No permitir categorías duplicadas por nombre.
+- No permitir productos duplicados por SKU.
+- No permitir crear productos con categorías inexistentes.
+
+## DTOs implementados
+
+Para no exponer directamente las entidades JPA en la API, se crearon DTOs de entrada y salida.
+
+### Categorías
+
+- `CategoriaRequest`
+- `CategoriaResponse`
+
+### Productos
+
+- `ProductoRequest`
+- `ProductoResponse`
+
+## APIs REST implementadas
+
+### Categorías
+
+Base URL:
+
+```text
+/api/v1/categorias
 ```
 
-Respuesta esperada:
+Operaciones:
 
-```json
-{
-  "estado": "ok",
-  "mensaje": "Workshop Spring Boot activo"
-}
+- `GET /api/v1/categorias`
+- `GET /api/v1/categorias/{id}`
+- `POST /api/v1/categorias`
+- `PUT /api/v1/categorias/{id}`
+- `DELETE /api/v1/categorias/{id}`
+
+### Productos
+
+Base URL:
+
+```text
+/api/v1/productos
 ```
 
-### Paso 2 - Habilitar endpoint GET de saludos
+Operaciones:
 
-En `src/main/java/com/ejemplo/demo/api/controller/SaludoController.java`:
+- `GET /api/v1/productos`
+- `GET /api/v1/productos/{id}`
+- `POST /api/v1/productos`
+- `PUT /api/v1/productos/{id}`
+- `DELETE /api/v1/productos/{id}`
 
-- Descomentar bloque `PASO 2`.
-- Descomentar imports indicados.
-- Descomentar inyeccion de `SaludoService`.
-- Descomentar endpoint `@GetMapping("/saludos")`.
+## Validaciones implementadas
 
-Probar:
+### `CategoriaRequest`
 
-```bash
-curl "http://localhost:8080/api/v1/saludos?nombre=Ana"
+- Nombre obligatorio.
+- Descripción obligatoria.
+
+### `ProductoRequest`
+
+- Nombre obligatorio.
+- SKU obligatorio.
+- Precio mayor que cero.
+- Stock no negativo.
+- `categoriaId` obligatoria.
+
+## Manejo global de errores
+
+Se reutilizó `GlobalExceptionHandler` y se amplió para manejar:
+
+- `400 BAD REQUEST` para validaciones
+- `400 BAD REQUEST` para reglas de negocio
+- `404 NOT FOUND` para recursos inexistentes
+- `500 INTERNAL SERVER ERROR` para errores inesperados
+
+También se creó la excepción:
+
+- `ResourceNotFoundException`
+
+## Swagger / OpenAPI
+
+La documentación de la API se encuentra disponible en:
+
+```text
+http://localhost:8081/swagger-ui/index.html
 ```
 
-### Paso 3 - Habilitar endpoint POST con validacion
+Desde Swagger se probaron correctamente los endpoints de:
 
-En `SaludoController`:
+- categorías
+- productos
+- endpoints del proyecto base
 
-- Descomentar bloque `PASO 3`.
-- Descomentar imports (`@PostMapping`, `@RequestBody`, `@Valid`, `SaludoRequest`).
+## Pruebas realizadas
 
-Probar caso correcto:
+### Pruebas manuales verificadas
 
-```bash
-curl -X POST http://localhost:8080/api/v1/saludos \
-  -H "Content-Type: application/json" \
-  -d '{"nombre":"Ana"}'
-```
+- Creación válida de categoría → `201`
+- Validación fallida en categoría → `400`
+- Categoría inexistente → `404`
+- Creación de producto → `201`
+- Listado de productos → `200`
 
-Probar caso invalido:
+### Prueba automatizada implementada
 
-```bash
-curl -X POST http://localhost:8080/api/v1/saludos \
-  -H "Content-Type: application/json" \
-  -d '{"nombre":""}'
-```
+- `CategoriaControllerTest`
 
-Debe responder `400` en el caso invalido.
+### Casos cubiertos
 
-### Paso 4 - Ejercicio de logica de negocio
+- Creación válida → `201`
+- Validación fallida → `400`
+- Recurso inexistente → `404`
 
-En `src/main/java/com/ejemplo/demo/domain/service/SaludoService.java`:
-
-- Completar logica del metodo `normalizarNombre`.
-- Recomendaciones:
-  - Quitar espacios al inicio/final.
-  - Convertir primera letra a mayuscula.
-  - Validar reglas de negocio (opcional).
-
-### Paso 5 - Manejo de errores de negocio
-
-En `src/main/java/com/ejemplo/demo/api/exception/GlobalExceptionHandler.java`:
-
-- Descomentar bloque `PASO 5`.
-- Ajustar respuesta para `IllegalArgumentException`.
-
-Objetivo: si hay error de negocio, responder `400` con codigo `BUSINESS_RULE_ERROR`.
-
-### Paso 6 - Completar pruebas
-
-En `src/test/java/com/ejemplo/demo/api/controller/SaludoControllerTest.java`:
-
-- Completar bloque `PASO 6`.
-- Agregar pruebas para:
-  - GET `/api/v1/saludos`
-  - POST invalido con validacion
-
-Ejecutar:
+### Ejecutar pruebas
 
 ```bash
 mvn test
 ```
 
-### Paso 7 - Documentar API con Swagger/OpenAPI
-
-Objetivo: exponer y probar endpoints desde UI de documentacion.
-
-1. Agregar dependencia en `pom.xml`:
-
-```xml
-<dependency>
-  <groupId>org.springdoc</groupId>
-  <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-  <version>2.6.0</version>
-</dependency>
-```
-
-2. Levantar proyecto y abrir:
-
-- `http://localhost:8080/swagger-ui/index.html`
-- `http://localhost:8080/v3/api-docs`
-
-3. Agregar metadata (recomendado):
-
-- Titulo
-- Version
-- Descripcion
-- Contacto
-
-### Paso 8 - Crear endpoint desafiante (obligatorio)
-
-Implementar un endpoint mas real que un saludo.
-
-#### Opcion sugerida: Simulador de Prestamo
-
-- Endpoint: `POST /api/v1/simulaciones/prestamo`
-- Request:
-  - `monto` (BigDecimal, > 0)
-  - `tasaAnual` (BigDecimal, > 0)
-  - `meses` (int, entre 1 y 360)
-- Response:
-  - `cuotaMensual`
-  - `interesTotal`
-  - `totalPagar`
-
-Requisitos:
-
-- Validar datos de entrada con `jakarta.validation`.
-- Implementar logica en una clase de servicio.
-- Manejar errores de negocio en `GlobalExceptionHandler`.
-- Documentar endpoint en Swagger.
-- Crear al menos 2 pruebas:
-  - caso exitoso
-  - caso invalido
-
-Formula sugerida (cuota fija):
+Resultado esperado:
 
 ```text
-cuota = P * (r * (1 + r)^n) / ((1 + r)^n - 1)
+BUILD SUCCESS
 ```
 
-Donde:
+## Ejemplos de uso
 
-- `P` = monto
-- `r` = tasa mensual (`tasaAnual / 12 / 100`)
-- `n` = numero de meses
+### Crear categoría
 
----
+```json
+{
+  "nombre": "Laptops",
+  "descripcion": "Equipos portatiles"
+}
+```
+
+### Crear producto
+
+```json
+{
+  "nombre": "Lenovo ThinkPad",
+  "sku": "LAP-001",
+  "precio": 5999.99,
+  "stock": 10,
+  "categoriaId": 1
+}
+```
+
+## Ejecución del proyecto
+
+### Desde Eclipse
+
+- Clic derecho al proyecto
+- `Run As > Java Application`
+
+### Desde consola
+
+```bash
+mvn spring-boot:run
+```
 
 ## Checklist final
 
-- [ ] Proyecto corre en local
-- [ ] GET `/api/v1` responde OK
-- [ ] GET `/api/v1/saludos` habilitado
-- [ ] POST `/api/v1/saludos` habilitado y validando
-- [ ] Reglas de negocio implementadas
-- [ ] Manejo de errores de negocio implementado
-- [ ] Swagger/OpenAPI habilitado y accesible
-- [ ] Endpoint nuevo implementado
-- [ ] Tests del endpoint nuevo en verde
-- [ ] Pruebas pasando (`mvn test`)
+- [x] Proyecto corre en local
+- [x] `GET /api/v1` responde OK
+- [x] `GET /api/v1/saludos` habilitado
+- [x] `POST /api/v1/saludos` habilitado y validando
+- [x] Reglas de negocio implementadas
+- [x] Manejo de errores de negocio implementado
+- [x] Swagger/OpenAPI habilitado y accesible
+- [x] Endpoint de simulación implementado
+- [x] Incremento JPA con PostgreSQL implementado
+- [x] Entidades relacionadas creadas
+- [x] CRUD de categorías implementado
+- [x] CRUD de productos implementado
+- [x] Validaciones funcionando
+- [x] Manejo de 404 implementado
+- [x] Pruebas pasando (`mvn test`)
+
+## Conclusión
+
+Con este avance, el proyecto evolucionó desde un workshop base de Spring Boot hacia una aplicación con persistencia real usando JPA y PostgreSQL. Se mantuvo una arquitectura ordenada por capas, con DTOs, repositorios, servicios, controladores, validaciones, manejo global de errores, documentación en Swagger y pruebas automatizadas funcionales.
