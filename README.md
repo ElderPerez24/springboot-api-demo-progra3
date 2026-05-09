@@ -109,6 +109,7 @@ src/main/java
     ├── api
     │   ├── controller
     │   │   ├── CategoriaController.java
+    │   │   ├── DemoEstadoController.java
     │   │   ├── ProductoController.java
     │   │   ├── SaludoController.java
     │   │   └── SimulacionController.java
@@ -117,6 +118,7 @@ src/main/java
     │   │   ├── CategoriaResponse.java
     │   │   ├── ProductoRequest.java
     │   │   ├── ProductoResponse.java
+    │   │   ├── EstadoResponse.java
     │   │   └── ErrorResponse.java
     │   └── exception
     │       └── GlobalExceptionHandler.java
@@ -131,7 +133,10 @@ src/main/java
     │   │   └── ProductoRepository.java
     │   └── service
     │       ├── CategoriaService.java
-    │       └── ProductoService.java
+    │       ├── ProductoService.java
+    │       └── estado
+    │           ├── EstadoManual.java
+    │           └── EstadoSingletonService.java
     └── SpringbootApiDemoApplication.java
 
 src/test/java
@@ -406,6 +411,26 @@ BUILD SUCCESS
 mvn spring-boot:run
 ```
 
+## Paso 9: Contract-first con OpenAPI Generator
+
+En este avance se agregó el enfoque **contract-first**. Se creó el contrato `src/main/resources/openapi/openapi.yaml` con las rutas existentes del workshop, saludos, simulación de préstamo, categorías, productos y la demo de estado.
+
+También se configuró `openapi-generator-maven-plugin` en `pom.xml` para generar interfaces Spring desde el YAML durante `generate-sources`, usando los DTOs existentes del proyecto para no duplicar modelos. Los controladores ahora implementan las interfaces generadas y mantienen las mismas rutas y la misma forma del JSON ya probado.
+
+Se agregó la demo `singleton/manual` solicitada para comparar el estado mantenido por un `@Service` de Spring contra una instancia creada manualmente con `new`.
+
+Comando para generar las interfaces:
+
+```bash
+mvn generate-sources
+```
+
+Verificación final:
+
+```bash
+mvn test
+```
+
 ## Checklist final
 
 - [x] Proyecto corre en local
@@ -423,6 +448,10 @@ mvn spring-boot:run
 - [x] Validaciones funcionando
 - [x] Manejo de 404 implementado
 - [x] Pruebas pasando (`mvn test`)
+- [x] Paso 9: contrato YAML agregado
+- [x] Paso 9: interfaces Spring generadas desde Maven
+- [x] Paso 9: controladores implementan interfaces generadas
+- [x] Paso 9: demo singleton/manual agregada
 
 ## Conclusión
 

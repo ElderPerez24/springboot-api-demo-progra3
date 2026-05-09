@@ -19,6 +19,7 @@
 
     <properties>
         <java.version>17</java.version>
+        <openapi-generator.version>7.8.0</openapi-generator.version>
     </properties>
 
   <dependencies>
@@ -61,6 +62,71 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>${openapi-generator.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-openapi-interfaces</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi/openapi.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <apiPackage>com.ejemplo.demo.api.generated</apiPackage>
+                            <modelPackage>com.ejemplo.demo.api.dto</modelPackage>
+                            <generateModels>false</generateModels>
+                            <generateSupportingFiles>false</generateSupportingFiles>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <configOptions>
+                                <interfaceOnly>true</interfaceOnly>
+                                <useTags>true</useTags>
+                                <useSpringBoot3>true</useSpringBoot3>
+                                <useJakartaEe>true</useJakartaEe>
+                                <skipDefaultInterface>true</skipDefaultInterface>
+                                <dateLibrary>java8</dateLibrary>
+                            </configOptions>
+                            <importMappings>
+                                <importMapping>SaludoRequest=com.ejemplo.demo.api.dto.SaludoRequest</importMapping>
+                                <importMapping>SaludoResponse=com.ejemplo.demo.api.dto.SaludoResponse</importMapping>
+                                <importMapping>SimulacionPrestamoRequest=com.ejemplo.demo.api.dto.SimulacionPrestamoRequest</importMapping>
+                                <importMapping>SimulacionPrestamoResponse=com.ejemplo.demo.api.dto.SimulacionPrestamoResponse</importMapping>
+                                <importMapping>EstadoResponse=com.ejemplo.demo.api.dto.EstadoResponse</importMapping>
+                                <importMapping>CategoriaRequest=com.ejemplo.demo.api.dto.CategoriaRequest</importMapping>
+                                <importMapping>CategoriaResponse=com.ejemplo.demo.api.dto.CategoriaResponse</importMapping>
+                                <importMapping>ProductoRequest=com.ejemplo.demo.api.dto.ProductoRequest</importMapping>
+                                <importMapping>ProductoResponse=com.ejemplo.demo.api.dto.ProductoResponse</importMapping>
+                                <importMapping>ErrorResponse=com.ejemplo.demo.api.dto.ErrorResponse</importMapping>
+                            </importMappings>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>add-openapi-generated-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/openapi/src/main/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

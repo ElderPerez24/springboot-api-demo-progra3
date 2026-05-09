@@ -1,0 +1,583 @@
+openapi: 3.0.3
+info:
+  title: API Spring Boot Demo
+  version: 1.0.0
+  description: Contrato OpenAPI contract-first para el laboratorio Spring Boot.
+servers:
+  - url: http://localhost:8081
+    description: Servidor local del proyecto
+
+tags:
+  - name: workshop
+    description: Endpoints base del workshop y saludos
+  - name: simulaciones
+    description: Endpoints de simulaciones
+  - name: demo-estado
+    description: Demostracion de estado singleton contra instancia manual
+  - name: categorias
+    description: CRUD de categorias
+  - name: productos
+    description: CRUD de productos
+
+paths:
+  /api/v1:
+    get:
+      tags:
+        - workshop
+      operationId: getWorkshopHealth
+      summary: Estado del workshop
+      responses:
+        '200':
+          description: Estado del workshop obtenido correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+              example:
+                estado: ok
+                mensaje: Workshop Spring Boot activo
+
+  /api/v1/saludos:
+    get:
+      tags:
+        - workshop
+      operationId: saludarPorGet
+      summary: Saludo por parametro query
+      parameters:
+        - name: nombre
+          in: query
+          required: false
+          schema:
+            type: string
+            default: Mundo
+      responses:
+        '200':
+          description: Saludo generado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaludoResponse'
+        '400':
+          description: Error de regla de negocio o validacion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - workshop
+      operationId: saludarPorPost
+      summary: Saludo por cuerpo JSON
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaludoRequest'
+      responses:
+        '200':
+          description: Saludo generado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaludoResponse'
+        '400':
+          description: Error de validacion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/simulaciones/prestamo:
+    post:
+      tags:
+        - simulaciones
+      operationId: simularPrestamo
+      summary: Simular prestamo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulacionPrestamoRequest'
+      responses:
+        '200':
+          description: Prestamo simulado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulacionPrestamoResponse'
+        '400':
+          description: Error de validacion o regla de negocio
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/demo/estado/singleton/{valor}:
+    post:
+      tags:
+        - demo-estado
+      operationId: actualizarSingleton
+      summary: Actualizar valor usando bean singleton de Spring
+      parameters:
+        - name: valor
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Valor singleton actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstadoResponse'
+
+  /api/v1/demo/estado/singleton:
+    get:
+      tags:
+        - demo-estado
+      operationId: obtenerSingleton
+      summary: Obtener valor actual del bean singleton de Spring
+      responses:
+        '200':
+          description: Valor singleton obtenido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstadoResponse'
+
+  /api/v1/demo/estado/singleton/reset:
+    post:
+      tags:
+        - demo-estado
+      operationId: reiniciarSingleton
+      summary: Reiniciar valor singleton a cero
+      responses:
+        '200':
+          description: Valor singleton reiniciado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstadoResponse'
+
+  /api/v1/demo/estado/manual/{valor}:
+    post:
+      tags:
+        - demo-estado
+      operationId: actualizarManual
+      summary: Actualizar valor en una instancia manual creada con new
+      parameters:
+        - name: valor
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Valor manual actualizado en esa instancia
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstadoResponse'
+
+  /api/v1/demo/estado/manual:
+    get:
+      tags:
+        - demo-estado
+      operationId: obtenerManual
+      summary: Obtener valor desde una instancia manual nueva
+      responses:
+        '200':
+          description: Valor manual obtenido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstadoResponse'
+
+  /api/v1/categorias:
+    get:
+      tags:
+        - categorias
+      operationId: listarCategorias
+      summary: Listar categorias
+      responses:
+        '200':
+          description: Lista de categorias obtenida correctamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoriaResponse'
+    post:
+      tags:
+        - categorias
+      operationId: crearCategoria
+      summary: Crear categoria
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoriaRequest'
+      responses:
+        '201':
+          description: Categoria creada correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoriaResponse'
+        '400':
+          description: Error de validacion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/categorias/{id}:
+    get:
+      tags:
+        - categorias
+      operationId: obtenerCategoriaPorId
+      summary: Obtener categoria por id
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Categoria encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoriaResponse'
+        '404':
+          description: Categoria no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - categorias
+      operationId: actualizarCategoria
+      summary: Actualizar categoria
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoriaRequest'
+      responses:
+        '200':
+          description: Categoria actualizada correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoriaResponse'
+        '400':
+          description: Error de validacion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Categoria no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - categorias
+      operationId: eliminarCategoria
+      summary: Eliminar categoria
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '204':
+          description: Categoria eliminada correctamente
+        '404':
+          description: Categoria no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/productos:
+    get:
+      tags:
+        - productos
+      operationId: listarProductos
+      summary: Listar productos
+      responses:
+        '200':
+          description: Lista de productos obtenida correctamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductoResponse'
+    post:
+      tags:
+        - productos
+      operationId: crearProducto
+      summary: Crear producto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductoRequest'
+      responses:
+        '201':
+          description: Producto creado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductoResponse'
+        '400':
+          description: Error de validacion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/productos/{id}:
+    get:
+      tags:
+        - productos
+      operationId: obtenerProductoPorId
+      summary: Obtener producto por id
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Producto encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductoResponse'
+        '404':
+          description: Producto no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - productos
+      operationId: actualizarProducto
+      summary: Actualizar producto
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductoRequest'
+      responses:
+        '200':
+          description: Producto actualizado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductoResponse'
+        '400':
+          description: Error de validacion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Producto no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - productos
+      operationId: eliminarProducto
+      summary: Eliminar producto
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '204':
+          description: Producto eliminado correctamente
+        '404':
+          description: Producto no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+
+  schemas:
+    SaludoRequest:
+      type: object
+      required:
+        - nombre
+      properties:
+        nombre:
+          type: string
+          maxLength: 50
+          minLength: 1
+    SaludoResponse:
+      type: object
+      properties:
+        mensaje:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    SimulacionPrestamoRequest:
+      type: object
+      required:
+        - monto
+        - tasaAnual
+        - meses
+      properties:
+        monto:
+          type: number
+          minimum: 0.01
+        tasaAnual:
+          type: number
+          minimum: 0.01
+        meses:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 360
+    SimulacionPrestamoResponse:
+      type: object
+      properties:
+        cuotaMensual:
+          type: number
+        interesTotal:
+          type: number
+        totalPagar:
+          type: number
+    EstadoResponse:
+      type: object
+      properties:
+        tipo:
+          type: string
+        valorActual:
+          type: integer
+          format: int32
+    CategoriaRequest:
+      type: object
+      required:
+        - nombre
+        - descripcion
+      properties:
+        nombre:
+          type: string
+          maxLength: 100
+          minLength: 1
+        descripcion:
+          type: string
+          maxLength: 255
+          minLength: 1
+    CategoriaResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nombre:
+          type: string
+        descripcion:
+          type: string
+        creadoEn:
+          type: string
+          format: date-time
+        actualizadoEn:
+          type: string
+          format: date-time
+    ProductoRequest:
+      type: object
+      required:
+        - nombre
+        - sku
+        - precio
+        - stock
+        - categoriaId
+      properties:
+        nombre:
+          type: string
+          maxLength: 120
+          minLength: 1
+        sku:
+          type: string
+          maxLength: 50
+          minLength: 1
+        precio:
+          type: number
+          exclusiveMinimum: true
+          minimum: 0
+        stock:
+          type: integer
+          format: int32
+          minimum: 0
+        categoriaId:
+          type: integer
+          format: int64
+    ProductoResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nombre:
+          type: string
+        sku:
+          type: string
+        precio:
+          type: number
+        stock:
+          type: integer
+          format: int32
+        categoriaId:
+          type: integer
+          format: int64
+        categoriaNombre:
+          type: string
+        creadoEn:
+          type: string
+          format: date-time
+        actualizadoEn:
+          type: string
+          format: date-time
+    ErrorResponse:
+      type: object
+      properties:
+        codigo:
+          type: string
+        mensaje:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        detalles:
+          type: object
+          additionalProperties:
+            type: string

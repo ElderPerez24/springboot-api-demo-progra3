@@ -2,20 +2,20 @@ package com.ejemplo.demo.api.controller;
 
 import com.ejemplo.demo.api.dto.ProductoRequest;
 import com.ejemplo.demo.api.dto.ProductoResponse;
+import com.ejemplo.demo.api.generated.ProductosApi;
 import com.ejemplo.demo.domain.service.ProductoService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/productos")
-public class ProductoController {
+public class ProductoController implements ProductosApi {
 
     private final ProductoService productoService;
 
@@ -23,26 +23,19 @@ public class ProductoController {
         this.productoService = productoService;
     }
 
-    @Operation(summary = "Listar productos")
-    @ApiResponse(responseCode = "200", description = "Lista de productos obtenida correctamente")
-    @GetMapping
-    public ResponseEntity<List<ProductoResponse>> listar() {
+    @Override
+    public ResponseEntity<List<ProductoResponse>> listarProductos() {
         return ResponseEntity.ok(productoService.listar());
     }
 
-    @Operation(summary = "Obtener producto por id")
-    @ApiResponse(responseCode = "200", description = "Producto encontrado")
-    @ApiResponse(responseCode = "404", description = "Producto no encontrado")
-    @GetMapping("/{id}")
-    public ResponseEntity<ProductoResponse> obtenerPorId(@PathVariable Long id) {
+    @Override
+    public ResponseEntity<ProductoResponse> obtenerProductoPorId(@PathVariable Long id) {
         return ResponseEntity.ok(productoService.obtenerPorId(id));
     }
 
-    @Operation(summary = "Crear producto")
-    @ApiResponse(responseCode = "201", description = "Producto creado correctamente")
-    @PostMapping
-    public ResponseEntity<ProductoResponse> crear(@Valid @RequestBody ProductoRequest request) {
-        ProductoResponse response = productoService.crear(request);
+    @Override
+    public ResponseEntity<ProductoResponse> crearProducto(@Valid @RequestBody ProductoRequest productoRequest) {
+        ProductoResponse response = productoService.crear(productoRequest);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -53,20 +46,14 @@ public class ProductoController {
         return ResponseEntity.created(location).body(response);
     }
 
-    @Operation(summary = "Actualizar producto")
-    @ApiResponse(responseCode = "200", description = "Producto actualizado correctamente")
-    @ApiResponse(responseCode = "404", description = "Producto no encontrado")
-    @PutMapping("/{id}")
-    public ResponseEntity<ProductoResponse> actualizar(@PathVariable Long id,
-                                                       @Valid @RequestBody ProductoRequest request) {
-        return ResponseEntity.ok(productoService.actualizar(id, request));
+    @Override
+    public ResponseEntity<ProductoResponse> actualizarProducto(@PathVariable Long id,
+                                                               @Valid @RequestBody ProductoRequest productoRequest) {
+        return ResponseEntity.ok(productoService.actualizar(id, productoRequest));
     }
 
-    @Operation(summary = "Eliminar producto")
-    @ApiResponse(responseCode = "204", description = "Producto eliminado correctamente")
-    @ApiResponse(responseCode = "404", description = "Producto no encontrado")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+    @Override
+    public ResponseEntity<Void> eliminarProducto(@PathVariable Long id) {
         productoService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
